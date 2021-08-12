@@ -26,13 +26,15 @@ namespace CodeReviewPatchJson265739
             JsonDocumentOptions options = default)
         {
             if (doc == null) throw new ArgumentNullException(nameof(doc));
-            if (doc.RootElement.ValueKind != JsonValueKind.Object)
+
+            var rootElement = doc.RootElement.Clone();
+            if (rootElement.ValueKind != JsonValueKind.Object)
                 throw new NotSupportedException("Only objects are supported.");
 
-            foreach (JsonProperty jsonProperty in doc.RootElement.EnumerateObject())
+            foreach (JsonProperty jsonProperty in rootElement.EnumerateObject())
             {
                 string propertyName = jsonProperty.Name;
-                JsonElement newElement = doc.RootElement.GetProperty(propertyName);
+                JsonElement newElement = rootElement.GetProperty(propertyName);
                 bool hasProperty = entity.TryGetValue(propertyName, out object oldValue);
 
                 // sanity checks
@@ -48,9 +50,11 @@ namespace CodeReviewPatchJson265739
                     oldElement, newElement, propertyName,
                     addPropertyIfNotExists, useTypeValidation, options);
             }
-            using JsonDocument finalDoc = JsonDocument.Parse(JsonSerializer.Serialize(entity));
-            return finalDoc.RootElement.Clone();
+
+            JsonDocument finalDoc = JsonDocument.Parse(JsonSerializer.Serialize(entity));
+            return finalDoc.RootElement;
         }
+
         private static JsonElement GetNewValue(
             JsonElement? oldElementNullable,
             JsonElement newElement,
@@ -59,7 +63,7 @@ namespace CodeReviewPatchJson265739
             bool useTypeValidation,
             JsonDocumentOptions options)
         {
-            if (oldElementNullable == null) return newElement.Clone();
+            if (oldElementNullable == null) return newElement;
             JsonElement oldElement = (JsonElement)oldElementNullable;
 
             // type validation
@@ -75,7 +79,7 @@ namespace CodeReviewPatchJson265739
                 return DynamicUpdate(entity, newJson, addPropertyIfNotExists, useTypeValidation, options);
             }
 
-            return newElement.Clone();
+            return newElement;
         }
 
         private static bool IsValidType(JsonElement oldElement, JsonElement newElement)
