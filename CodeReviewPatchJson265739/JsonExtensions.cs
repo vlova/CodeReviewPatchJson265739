@@ -13,7 +13,7 @@ namespace CodeReviewPatchJson265739
             PatchOptions patchOptions,
             JsonDocumentOptions jsonDocumentOptions = default)
         {
-            using JsonDocument doc = JsonDocument.Parse(patch, jsonDocumentOptions);
+            using var doc = JsonDocument.Parse(patch, jsonDocumentOptions);
             return GetPatched(toPatch, doc, patchOptions);
         }
 
@@ -47,13 +47,13 @@ namespace CodeReviewPatchJson265739
             if (patch.ValueKind != JsonValueKind.Object)
                 throw new NotSupportedException("Only objects are supported.");
 
-            foreach (JsonProperty patchChildProp in patch.EnumerateObject())
+            foreach (var patchChildProp in patch.EnumerateObject())
             {
-                string propertyName = patchChildProp.Name;
+                var propertyName = patchChildProp.Name;
                 var toPatchHasProperty = toPatch.ContainsKey(propertyName);
                 if (!toPatchHasProperty && !patchOptions.AddPropertyIfNotExists) continue;
                 
-                JsonElement? toPatchChild = GetJsonProperty(toPatch, propertyName);
+                var toPatchChild = GetJsonProperty(toPatch, propertyName);
                 toPatch[propertyName] = GetPatched(
                     toPatchChild, patchChildProp.Value, propertyName,
                     patchOptions);
@@ -62,7 +62,7 @@ namespace CodeReviewPatchJson265739
 
         private static JsonElement? GetJsonProperty(IDictionary<string, object> entity, string propertyName)
         {
-            entity.TryGetValue(propertyName, out object oldValue);
+            entity.TryGetValue(propertyName, out var oldValue);
 
             if (oldValue == null)
                 return null;
@@ -80,7 +80,7 @@ namespace CodeReviewPatchJson265739
             PatchOptions patchOptions)
         {
             if (toPatch == null) return patch;
-            JsonElement oldElement = (JsonElement)toPatch;
+            var oldElement = (JsonElement)toPatch;
 
             // type validation
             if (patchOptions.UseTypeValidation && !IsValidType(oldElement, patch))
