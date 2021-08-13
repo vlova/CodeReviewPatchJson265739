@@ -10,9 +10,19 @@ namespace CodeReviewPatchJson265739
         public static IDictionary<string, object> GetPatched(
             this JsonDocument toPatch,
             string patch,
-            PatchOptions patchOptions,
+            PatchOptions patchOptions = default,
             JsonDocumentOptions jsonDocumentOptions = default)
         {
+            if (toPatch == null)
+            {
+                throw new ArgumentNullException(nameof(toPatch));
+            }
+
+            if (patch == null)
+            {
+                throw new ArgumentNullException(nameof(patch));
+            }
+
             using var doc = JsonDocument.Parse(patch, jsonDocumentOptions);
             return GetPatched(toPatch, doc, patchOptions);
         }
@@ -20,8 +30,13 @@ namespace CodeReviewPatchJson265739
         public static IDictionary<string, object> GetPatched(
             this JsonDocument toPatch,
             JsonDocument patch,
-            PatchOptions patchOptions)
+            PatchOptions patchOptions = default)
         {
+            if (toPatch == null)
+            {
+                throw new ArgumentNullException(nameof(toPatch));
+            }
+
             if (patch == null)
             {
                 throw new ArgumentNullException(nameof(patch));
