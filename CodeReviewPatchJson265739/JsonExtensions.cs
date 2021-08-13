@@ -7,57 +7,56 @@ namespace CodeReviewPatchJson265739
 {
     public static class JsonExtensions
     {
-        public static IDictionary<string, object> DynamicUpdate(
-            this JsonDocument entity,
-            string patchJson,
-            DynamicUpdateOptions updateOptions,
+        public static IDictionary<string, object> GetPatched(
+            this JsonDocument toPatch,
+            string patch,
+            PatchOptions patchOptions,
             JsonDocumentOptions jsonDocumentOptions = default)
         {
-            using JsonDocument doc = JsonDocument.Parse(patchJson, jsonDocumentOptions);
-            return DynamicUpdate(entity, doc, updateOptions);
+            using JsonDocument doc = JsonDocument.Parse(patch, jsonDocumentOptions);
+            return GetPatched(toPatch, doc, patchOptions);
         }
 
-        public static IDictionary<string, object> DynamicUpdate(
-            this JsonDocument entity,
-            JsonDocument doc,
-            DynamicUpdateOptions updateOptions)
+        public static IDictionary<string, object> GetPatched(
+            this JsonDocument toPatch,
+            JsonDocument patch,
+            PatchOptions patchOptions)
         {
-            if (doc == null) throw new ArgumentNullException(nameof(doc));
+            if (patch == null) throw new ArgumentNullException(nameof(patch));
 
-            return DynamicUpdate(entity.RootElement.Clone(), doc.RootElement.Clone(), updateOptions);
+            return GetPatched(toPatch.RootElement.Clone(), patch.RootElement.Clone(), patchOptions);
         }
 
-        private static IDictionary<string, object> DynamicUpdate(
-            JsonElement entity,
-            JsonElement rootElement,
-            DynamicUpdateOptions updateOptions)
+        private static IDictionary<string, object> GetPatched(
+            JsonElement toPatch,
+            JsonElement patch,
+            PatchOptions patchOptions)
         {
-            var convertedEntity = ToExpandoObject(entity);
-            DynamicUpdate(convertedEntity, rootElement, updateOptions);
-            return convertedEntity;
+            var patched = ToExpandoObject(toPatch);
+            Patch(patched, patch, patchOptions);
+            return patched;
         }
 
-        private static void DynamicUpdate(
-            IDictionary<string, object> entity,
-            JsonElement rootElement,
-            DynamicUpdateOptions updateOptions)
+        private static void Patch(
+            IDictionary<string, object> toPatch,
+            JsonElement patch,
+            PatchOptions patchOptions)
         {
-            updateOptions ??= new DynamicUpdateOptions();
+            patchOptions ??= new PatchOptions();
 
-            if (rootElement.ValueKind != JsonValueKind.Object)
+            if (patch.ValueKind != JsonValueKind.Object)
                 throw new NotSupportedException("Only objects are supported.");
 
-            foreach (JsonProperty jsonProperty in rootElement.EnumerateObject())
+            foreach (JsonProperty patchChildProp in patch.EnumerateObject())
             {
-                string propertyName = jsonProperty.Name;
-                var hasProperty = entity.ContainsKey(propertyName);
-                if (!hasProperty && !updateOptions.AddPropertyIfNotExists) continue;
-
-                JsonElement newElement = rootElement.GetProperty(propertyName);
-                JsonElement? oldElement = GetJsonProperty(entity, propertyName);
-                entity[propertyName] = GetNewValue(
-                    oldElement, newElement, propertyName,
-                    updateOptions);
+                string propertyName = patchChildProp.Name;
+                var toPatchHasProperty = toPatch.ContainsKey(propertyName);
+                if (!toPatchHasProperty && !patchOptions.AddPropertyIfNotExists) continue;
+                
+                JsonElement? toPatchChild = GetJsonProperty(toPatch, propertyName);
+                toPatch[propertyName] = GetPatched(
+                    toPatchChild, patchChildProp.Value, propertyName,
+                    patchOptions);
             }
         }
 
@@ -74,29 +73,29 @@ namespace CodeReviewPatchJson265739
             return (JsonElement)oldValue;
         }
 
-        private static object GetNewValue(
-            JsonElement? oldElementNullable,
-            JsonElement newElement,
+        private static object GetPatched(
+            JsonElement? toPatch,
+            JsonElement patch,
             string propertyName,
-            DynamicUpdateOptions updateOptions)
+            PatchOptions patchOptions)
         {
-            if (oldElementNullable == null) return newElement;
-            JsonElement oldElement = (JsonElement)oldElementNullable;
+            if (toPatch == null) return patch;
+            JsonElement oldElement = (JsonElement)toPatch;
 
             // type validation
-            if (updateOptions.UseTypeValidation && !IsValidType(oldElement, newElement))
-                throw new ArgumentException($"Type mismatch. The property '{propertyName}' must be of type '{oldElement.ValueKind}'.", nameof(newElement));
+            if (patchOptions.UseTypeValidation && !IsValidType(oldElement, patch))
+                throw new ArgumentException($"Type mismatch. The property '{propertyName}' must be of type '{oldElement.ValueKind}'.", nameof(patch));
 
             // recursively go down the tree for objects
             if (oldElement.ValueKind == JsonValueKind.Object)
             {
-                return DynamicUpdate(oldElement, newElement, updateOptions);
+                return GetPatched(oldElement, patch, patchOptions);
             }
 
-            return newElement;
+            return patch;
         }
 
-        public class DynamicUpdateOptions
+        public class PatchOptions
         {
             public bool AddPropertyIfNotExists { get; set; } = false;
 

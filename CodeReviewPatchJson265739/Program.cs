@@ -15,7 +15,7 @@ namespace CodeReviewPatchJson265739
             bool addPropertyIfNotExists = false;
 
             // patch it!
-            var expandoObject = JsonDocument.Parse(original).DynamicUpdate(patch, new JsonExtensions.DynamicUpdateOptions
+            var expandoObject = JsonDocument.Parse(original).GetPatched(patch, new JsonExtensions.PatchOptions
             {
                 AddPropertyIfNotExists = addPropertyIfNotExists
             });
