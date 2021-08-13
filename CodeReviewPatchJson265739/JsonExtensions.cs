@@ -22,7 +22,10 @@ namespace CodeReviewPatchJson265739
             JsonDocument patch,
             PatchOptions patchOptions)
         {
-            if (patch == null) throw new ArgumentNullException(nameof(patch));
+            if (patch == null)
+            {
+                throw new ArgumentNullException(nameof(patch));
+            }
 
             return GetPatched(toPatch.RootElement.Clone(), patch.RootElement.Clone(), patchOptions);
         }
@@ -45,7 +48,9 @@ namespace CodeReviewPatchJson265739
             patchOptions ??= new PatchOptions();
 
             if (patch.ValueKind != JsonValueKind.Object)
+            {
                 throw new NotSupportedException("Only objects are supported.");
+            }
 
             foreach (var patchChildProp in patch.EnumerateObject())
             {
@@ -65,10 +70,14 @@ namespace CodeReviewPatchJson265739
             entity.TryGetValue(propertyName, out var oldValue);
 
             if (oldValue == null)
+            {
                 return null;
+            }
 
             if (!oldValue.GetType().IsAssignableTo(typeof(JsonElement)))
+            {
                 throw new ArgumentException($"Type mismatch. Must be {nameof(JsonElement)}.", nameof(entity));
+            }
 
             return (JsonElement)oldValue;
         }
@@ -79,11 +88,17 @@ namespace CodeReviewPatchJson265739
             string propertyName,
             PatchOptions patchOptions)
         {
-            if (toPatch == null) return patch;
+            if (toPatch == null)
+            {
+                return patch;
+            }
+
             var oldElement = (JsonElement)toPatch;
 
             if (patchOptions.UseTypeValidation && !IsValidType(oldElement, patch))
+            {
                 throw new ArgumentException($"Type mismatch. The property '{propertyName}' must be of type '{oldElement.ValueKind}'.", nameof(patch));
+            }
 
             if (oldElement.ValueKind == JsonValueKind.Object)
             {
@@ -113,11 +128,20 @@ namespace CodeReviewPatchJson265739
 
         private static bool IsValidType(JsonElement oldElement, JsonElement newElement)
         {
-            if (newElement.ValueKind == JsonValueKind.Null) return true;
+            if (newElement.ValueKind == JsonValueKind.Null)
+            {
+                return true;
+            }
 
-            if (oldElement.ValueKind == JsonValueKind.True && newElement.ValueKind == JsonValueKind.False) return true;
+            if (oldElement.ValueKind == JsonValueKind.True && newElement.ValueKind == JsonValueKind.False)
+            {
+                return true;
+            }
 
-            if (oldElement.ValueKind == JsonValueKind.False && newElement.ValueKind == JsonValueKind.True) return true;
+            if (oldElement.ValueKind == JsonValueKind.False && newElement.ValueKind == JsonValueKind.True)
+            {
+                return true;
+            }
 
             return (oldElement.ValueKind == newElement.ValueKind);
         }
