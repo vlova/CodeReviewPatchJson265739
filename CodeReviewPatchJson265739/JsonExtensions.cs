@@ -7,7 +7,7 @@ namespace CodeReviewPatchJson265739
 {
     public static class JsonExtensions
     {
-        public static object DynamicUpdate(
+        public static void DynamicUpdate(
             this IDictionary<string, object> entity,
             string patchJson,
             bool addPropertyIfNotExists = false,
@@ -15,10 +15,10 @@ namespace CodeReviewPatchJson265739
             JsonDocumentOptions options = default)
         {
             using JsonDocument doc = JsonDocument.Parse(patchJson, options);
-            return DynamicUpdate(entity, doc, addPropertyIfNotExists, useTypeValidation);
+            DynamicUpdate(entity, doc, addPropertyIfNotExists, useTypeValidation);
         }
 
-        public static object DynamicUpdate(
+        public static void DynamicUpdate(
             this IDictionary<string, object> entity,
             JsonDocument doc,
             bool addPropertyIfNotExists = false,
@@ -27,10 +27,10 @@ namespace CodeReviewPatchJson265739
             if (doc == null) throw new ArgumentNullException(nameof(doc));
 
             var rootElement = doc.RootElement.Clone();
-            return DynamicUpdate(entity, rootElement, addPropertyIfNotExists, useTypeValidation);
+            DynamicUpdate(entity, rootElement, addPropertyIfNotExists, useTypeValidation);
         }
 
-        public static object DynamicUpdate(
+        public static void DynamicUpdate(
             this IDictionary<string, object> entity,
             JsonElement rootElement,
             bool addPropertyIfNotExists = false,
@@ -58,8 +58,6 @@ namespace CodeReviewPatchJson265739
                     oldElement, newElement, propertyName,
                     addPropertyIfNotExists, useTypeValidation);
             }
-
-            return entity;
         }
 
         private static object GetNewValue(
@@ -79,7 +77,9 @@ namespace CodeReviewPatchJson265739
             // recursively go down the tree for objects
             if (oldElement.ValueKind == JsonValueKind.Object)
             {
-                return DynamicUpdate(ToExpandoObject(oldElement), newElement, addPropertyIfNotExists, useTypeValidation);
+                var oldObject = ToExpandoObject(oldElement);
+                DynamicUpdate(oldObject, newElement, addPropertyIfNotExists, useTypeValidation);
+                return oldObject;
             }
 
             return newElement;
