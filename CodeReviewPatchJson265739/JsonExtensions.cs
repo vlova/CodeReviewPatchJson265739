@@ -42,9 +42,10 @@ namespace CodeReviewPatchJson265739
             {
                 string propertyName = jsonProperty.Name;
                 var hasProperty = entity.ContainsKey(propertyName);
+                if (!hasProperty && !updateOptions.AddPropertyIfNotExists) continue;
+
                 JsonElement newElement = rootElement.GetProperty(propertyName);
                 JsonElement? oldElement = GetJsonProperty(entity, propertyName);
-                if (!hasProperty && !updateOptions.AddPropertyIfNotExists) continue;
                 entity[propertyName] = GetNewValue(
                     oldElement, newElement, propertyName,
                     updateOptions);
