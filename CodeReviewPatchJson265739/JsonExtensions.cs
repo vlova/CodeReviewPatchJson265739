@@ -80,12 +80,21 @@ namespace CodeReviewPatchJson265739
             // recursively go down the tree for objects
             if (oldElement.ValueKind == JsonValueKind.Object)
             {
-                string oldJson = oldElement.GetRawText();
-                IDictionary<string, object> entity = JsonSerializer.Deserialize<ExpandoObject>(oldJson);
-                return DynamicUpdate(entity, newElement, addPropertyIfNotExists, useTypeValidation);
+                return DynamicUpdate(ToExpandoObject(oldElement), newElement, addPropertyIfNotExists, useTypeValidation);
             }
 
             return newElement;
+        }
+
+        private static ExpandoObject ToExpandoObject(JsonElement jsonElement)
+        {
+            var obj = new ExpandoObject();
+            foreach (var property in jsonElement.EnumerateObject())
+            {
+                (obj as IDictionary<string, object>)[property.Name] = property.Value;
+            }
+
+            return obj;
         }
 
         private static bool IsValidType(JsonElement oldElement, JsonElement newElement)
