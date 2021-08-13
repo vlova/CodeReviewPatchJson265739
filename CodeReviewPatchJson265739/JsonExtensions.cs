@@ -15,19 +15,27 @@ namespace CodeReviewPatchJson265739
             JsonDocumentOptions options = default)
         {
             using JsonDocument doc = JsonDocument.Parse(patchJson, options);
-            return DynamicUpdate(entity, doc, addPropertyIfNotExists, useTypeValidation, options);
+            return DynamicUpdate(entity, doc, addPropertyIfNotExists, useTypeValidation);
         }
 
         public static JsonElement DynamicUpdate(
             this IDictionary<string, object> entity,
             JsonDocument doc,
             bool addPropertyIfNotExists = false,
-            bool useTypeValidation = true,
-            JsonDocumentOptions options = default)
+            bool useTypeValidation = true)
         {
             if (doc == null) throw new ArgumentNullException(nameof(doc));
 
             var rootElement = doc.RootElement.Clone();
+            return DynamicUpdate(entity, rootElement, addPropertyIfNotExists, useTypeValidation);
+        }
+
+        public static JsonElement DynamicUpdate(
+            this IDictionary<string, object> entity,
+            JsonElement rootElement,
+            bool addPropertyIfNotExists = false,
+            bool useTypeValidation = true)
+        {
             if (rootElement.ValueKind != JsonValueKind.Object)
                 throw new NotSupportedException("Only objects are supported.");
 
@@ -48,7 +56,7 @@ namespace CodeReviewPatchJson265739
                 if (!hasProperty && !addPropertyIfNotExists) continue;
                 entity[propertyName] = GetNewValue(
                     oldElement, newElement, propertyName,
-                    addPropertyIfNotExists, useTypeValidation, options);
+                    addPropertyIfNotExists, useTypeValidation);
             }
 
             JsonDocument finalDoc = JsonDocument.Parse(JsonSerializer.Serialize(entity));
@@ -60,8 +68,7 @@ namespace CodeReviewPatchJson265739
             JsonElement newElement,
             string propertyName,
             bool addPropertyIfNotExists,
-            bool useTypeValidation,
-            JsonDocumentOptions options)
+            bool useTypeValidation)
         {
             if (oldElementNullable == null) return newElement;
             JsonElement oldElement = (JsonElement)oldElementNullable;
@@ -74,9 +81,8 @@ namespace CodeReviewPatchJson265739
             if (oldElement.ValueKind == JsonValueKind.Object)
             {
                 string oldJson = oldElement.GetRawText();
-                string newJson = newElement.ToString();
                 IDictionary<string, object> entity = JsonSerializer.Deserialize<ExpandoObject>(oldJson);
-                return DynamicUpdate(entity, newJson, addPropertyIfNotExists, useTypeValidation, options);
+                return DynamicUpdate(entity, newElement, addPropertyIfNotExists, useTypeValidation);
             }
 
             return newElement;
