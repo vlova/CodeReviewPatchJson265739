@@ -52,7 +52,7 @@ namespace CodeReviewPatchJson265739
                 var propertyName = patchChildProp.Name;
                 var toPatchHasProperty = toPatch.ContainsKey(propertyName);
                 if (!toPatchHasProperty && !patchOptions.AddPropertyIfNotExists) continue;
-                
+
                 var toPatchChild = GetJsonProperty(toPatch, propertyName);
                 toPatch[propertyName] = GetPatched(
                     toPatchChild, patchChildProp.Value, propertyName,
@@ -82,11 +82,9 @@ namespace CodeReviewPatchJson265739
             if (toPatch == null) return patch;
             var oldElement = (JsonElement)toPatch;
 
-            // type validation
             if (patchOptions.UseTypeValidation && !IsValidType(oldElement, patch))
                 throw new ArgumentException($"Type mismatch. The property '{propertyName}' must be of type '{oldElement.ValueKind}'.", nameof(patch));
 
-            // recursively go down the tree for objects
             if (oldElement.ValueKind == JsonValueKind.Object)
             {
                 return GetPatched(oldElement, patch, patchOptions);
@@ -117,12 +115,10 @@ namespace CodeReviewPatchJson265739
         {
             if (newElement.ValueKind == JsonValueKind.Null) return true;
 
-            // 'true' --> 'false'
             if (oldElement.ValueKind == JsonValueKind.True && newElement.ValueKind == JsonValueKind.False) return true;
-            // 'false' --> 'true'
+
             if (oldElement.ValueKind == JsonValueKind.False && newElement.ValueKind == JsonValueKind.True) return true;
 
-            // type validation
             return (oldElement.ValueKind == newElement.ValueKind);
         }
 
