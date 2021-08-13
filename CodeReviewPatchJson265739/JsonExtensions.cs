@@ -10,32 +10,31 @@ namespace CodeReviewPatchJson265739
         public static void DynamicUpdate(
             this IDictionary<string, object> entity,
             string patchJson,
-            bool addPropertyIfNotExists = false,
-            bool useTypeValidation = true,
-            JsonDocumentOptions options = default)
+            DynamicUpdateOptions updateOptions,
+            JsonDocumentOptions jsonDocumentOptions = default)
         {
-            using JsonDocument doc = JsonDocument.Parse(patchJson, options);
-            DynamicUpdate(entity, doc, addPropertyIfNotExists, useTypeValidation);
+            using JsonDocument doc = JsonDocument.Parse(patchJson, jsonDocumentOptions);
+            DynamicUpdate(entity, doc, updateOptions);
         }
 
         public static void DynamicUpdate(
             this IDictionary<string, object> entity,
             JsonDocument doc,
-            bool addPropertyIfNotExists = false,
-            bool useTypeValidation = true)
+            DynamicUpdateOptions updateOptions)
         {
             if (doc == null) throw new ArgumentNullException(nameof(doc));
 
             var rootElement = doc.RootElement.Clone();
-            DynamicUpdate(entity, rootElement, addPropertyIfNotExists, useTypeValidation);
+            DynamicUpdate(entity, rootElement, updateOptions);
         }
 
         public static void DynamicUpdate(
             this IDictionary<string, object> entity,
             JsonElement rootElement,
-            bool addPropertyIfNotExists = false,
-            bool useTypeValidation = true)
+            DynamicUpdateOptions updateOptions)
         {
+            updateOptions ??= new DynamicUpdateOptions();
+
             if (rootElement.ValueKind != JsonValueKind.Object)
                 throw new NotSupportedException("Only objects are supported.");
 
@@ -53,10 +52,10 @@ namespace CodeReviewPatchJson265739
                         throw new ArgumentException($"Type mismatch. Must be {nameof(JsonElement)}.", nameof(entity));
                     oldElement = (JsonElement)oldValue;
                 }
-                if (!hasProperty && !addPropertyIfNotExists) continue;
+                if (!hasProperty && !updateOptions.AddPropertyIfNotExists) continue;
                 entity[propertyName] = GetNewValue(
                     oldElement, newElement, propertyName,
-                    addPropertyIfNotExists, useTypeValidation);
+                    updateOptions);
             }
         }
 
@@ -64,25 +63,31 @@ namespace CodeReviewPatchJson265739
             JsonElement? oldElementNullable,
             JsonElement newElement,
             string propertyName,
-            bool addPropertyIfNotExists,
-            bool useTypeValidation)
+            DynamicUpdateOptions updateOptions)
         {
             if (oldElementNullable == null) return newElement;
             JsonElement oldElement = (JsonElement)oldElementNullable;
 
             // type validation
-            if (useTypeValidation && !IsValidType(oldElement, newElement))
+            if (updateOptions.UseTypeValidation && !IsValidType(oldElement, newElement))
                 throw new ArgumentException($"Type mismatch. The property '{propertyName}' must be of type '{oldElement.ValueKind}'.", nameof(newElement));
 
             // recursively go down the tree for objects
             if (oldElement.ValueKind == JsonValueKind.Object)
             {
                 var oldObject = ToExpandoObject(oldElement);
-                DynamicUpdate(oldObject, newElement, addPropertyIfNotExists, useTypeValidation);
+                DynamicUpdate(oldObject, newElement, updateOptions);
                 return oldObject;
             }
 
             return newElement;
+        }
+
+        public class DynamicUpdateOptions
+        {
+            public bool AddPropertyIfNotExists { get; set; } = false;
+
+            public bool UseTypeValidation { get; set; } = true;
         }
 
         private static ExpandoObject ToExpandoObject(JsonElement jsonElement)

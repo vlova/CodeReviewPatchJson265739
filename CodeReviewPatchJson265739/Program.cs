@@ -18,7 +18,10 @@ namespace CodeReviewPatchJson265739
             ExpandoObject expandoObject = JsonSerializer.Deserialize<ExpandoObject>(original);
 
             // patch it!
-            expandoObject.DynamicUpdate(patch, addPropertyIfNotExists);
+            expandoObject.DynamicUpdate(patch, new JsonExtensions.DynamicUpdateOptions
+            {
+                AddPropertyIfNotExists = addPropertyIfNotExists
+            });
             Console.WriteLine(JsonSerializer.Serialize(expandoObject));
         }
     }
