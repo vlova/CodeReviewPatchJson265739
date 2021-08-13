@@ -145,27 +145,5 @@ namespace CodeReviewPatchJson265739
 
             return (oldElement.ValueKind == newElement.ValueKind);
         }
-
-        private static bool IsValidJsonPropertyName(string value)
-        {
-            if (string.IsNullOrEmpty(value)) return false;
-
-            // this is validation for our specific use case (C#)
-            // note that the official docs don't prohibit this though.
-            // https://datatracker.ietf.org/doc/html/rfc7159
-            for (int i = 0; i < value.Length; i++)
-            {
-                if (char.IsLetterOrDigit(value[i])) continue;
-                switch (value[i])
-                {
-                    case '-':
-                    case '_':
-                    default:
-                        break;
-                }
-            }
-
-            return true;
-        }
     }
 }
