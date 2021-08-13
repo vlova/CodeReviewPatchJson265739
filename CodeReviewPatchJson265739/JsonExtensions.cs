@@ -7,7 +7,7 @@ namespace CodeReviewPatchJson265739
 {
     public static class JsonExtensions
     {
-        public static JsonElement DynamicUpdate(
+        public static object DynamicUpdate(
             this IDictionary<string, object> entity,
             string patchJson,
             bool addPropertyIfNotExists = false,
@@ -18,7 +18,7 @@ namespace CodeReviewPatchJson265739
             return DynamicUpdate(entity, doc, addPropertyIfNotExists, useTypeValidation);
         }
 
-        public static JsonElement DynamicUpdate(
+        public static object DynamicUpdate(
             this IDictionary<string, object> entity,
             JsonDocument doc,
             bool addPropertyIfNotExists = false,
@@ -30,7 +30,7 @@ namespace CodeReviewPatchJson265739
             return DynamicUpdate(entity, rootElement, addPropertyIfNotExists, useTypeValidation);
         }
 
-        public static JsonElement DynamicUpdate(
+        public static object DynamicUpdate(
             this IDictionary<string, object> entity,
             JsonElement rootElement,
             bool addPropertyIfNotExists = false,
@@ -59,11 +59,10 @@ namespace CodeReviewPatchJson265739
                     addPropertyIfNotExists, useTypeValidation);
             }
 
-            JsonDocument finalDoc = JsonDocument.Parse(JsonSerializer.Serialize(entity));
-            return finalDoc.RootElement;
+            return entity;
         }
 
-        private static JsonElement GetNewValue(
+        private static object GetNewValue(
             JsonElement? oldElementNullable,
             JsonElement newElement,
             string propertyName,
