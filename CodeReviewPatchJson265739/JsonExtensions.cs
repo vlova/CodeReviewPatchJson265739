@@ -41,22 +41,31 @@ namespace CodeReviewPatchJson265739
             foreach (JsonProperty jsonProperty in rootElement.EnumerateObject())
             {
                 string propertyName = jsonProperty.Name;
+                var hasProperty = entity.ContainsKey(propertyName);
                 JsonElement newElement = rootElement.GetProperty(propertyName);
-                bool hasProperty = entity.TryGetValue(propertyName, out object oldValue);
-
-                // sanity checks
-                JsonElement? oldElement = null;
-                if (oldValue != null)
-                {
-                    if (!oldValue.GetType().IsAssignableTo(typeof(JsonElement)))
-                        throw new ArgumentException($"Type mismatch. Must be {nameof(JsonElement)}.", nameof(entity));
-                    oldElement = (JsonElement)oldValue;
-                }
+                JsonElement? oldElement = GetJsonProperty(entity, propertyName);
                 if (!hasProperty && !updateOptions.AddPropertyIfNotExists) continue;
                 entity[propertyName] = GetNewValue(
                     oldElement, newElement, propertyName,
                     updateOptions);
             }
+        }
+
+        private static JsonElement? GetJsonProperty(IDictionary<string, object> entity, string propertyName)
+        {
+            entity.TryGetValue(propertyName, out object oldValue);
+
+            // sanity checks
+            JsonElement? oldElement = null;
+            if (oldValue != null)
+            {
+                if (!oldValue.GetType().IsAssignableTo(typeof(JsonElement)))
+                    throw new ArgumentException($"Type mismatch. Must be {nameof(JsonElement)}.", nameof(entity));
+
+                oldElement = (JsonElement)oldValue;
+            }
+
+            return oldElement;
         }
 
         private static object GetNewValue(
