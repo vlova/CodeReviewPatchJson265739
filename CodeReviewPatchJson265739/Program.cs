@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Dynamic;
 using System.Text.Json;
 
 namespace CodeReviewPatchJson265739
@@ -15,10 +14,8 @@ namespace CodeReviewPatchJson265739
             // change this value to see the different types of patching method
             bool addPropertyIfNotExists = false;
 
-            ExpandoObject expandoObject = JsonSerializer.Deserialize<ExpandoObject>(original);
-
             // patch it!
-            expandoObject.DynamicUpdate(patch, new JsonExtensions.DynamicUpdateOptions
+            var expandoObject = JsonDocument.Parse(original).DynamicUpdate(patch, new JsonExtensions.DynamicUpdateOptions
             {
                 AddPropertyIfNotExists = addPropertyIfNotExists
             });

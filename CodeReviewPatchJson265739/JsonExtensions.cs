@@ -7,29 +7,38 @@ namespace CodeReviewPatchJson265739
 {
     public static class JsonExtensions
     {
-        public static void DynamicUpdate(
-            this IDictionary<string, object> entity,
+        public static IDictionary<string, object> DynamicUpdate(
+            this JsonDocument entity,
             string patchJson,
             DynamicUpdateOptions updateOptions,
             JsonDocumentOptions jsonDocumentOptions = default)
         {
             using JsonDocument doc = JsonDocument.Parse(patchJson, jsonDocumentOptions);
-            DynamicUpdate(entity, doc, updateOptions);
+            return DynamicUpdate(entity, doc, updateOptions);
         }
 
-        public static void DynamicUpdate(
-            this IDictionary<string, object> entity,
+        public static IDictionary<string, object> DynamicUpdate(
+            this JsonDocument entity,
             JsonDocument doc,
             DynamicUpdateOptions updateOptions)
         {
             if (doc == null) throw new ArgumentNullException(nameof(doc));
 
-            var rootElement = doc.RootElement.Clone();
-            DynamicUpdate(entity, rootElement, updateOptions);
+            return DynamicUpdate(entity.RootElement.Clone(), doc.RootElement.Clone(), updateOptions);
         }
 
-        public static void DynamicUpdate(
-            this IDictionary<string, object> entity,
+        private static IDictionary<string, object> DynamicUpdate(
+            JsonElement entity,
+            JsonElement rootElement,
+            DynamicUpdateOptions updateOptions)
+        {
+            var convertedEntity = ToExpandoObject(entity);
+            DynamicUpdate(convertedEntity, rootElement, updateOptions);
+            return convertedEntity;
+        }
+
+        private static void DynamicUpdate(
+            IDictionary<string, object> entity,
             JsonElement rootElement,
             DynamicUpdateOptions updateOptions)
         {
@@ -81,9 +90,7 @@ namespace CodeReviewPatchJson265739
             // recursively go down the tree for objects
             if (oldElement.ValueKind == JsonValueKind.Object)
             {
-                var oldObject = ToExpandoObject(oldElement);
-                DynamicUpdate(oldObject, newElement, updateOptions);
-                return oldObject;
+                return DynamicUpdate(oldElement, newElement, updateOptions);
             }
 
             return newElement;
