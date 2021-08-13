@@ -55,17 +55,13 @@ namespace CodeReviewPatchJson265739
         {
             entity.TryGetValue(propertyName, out object oldValue);
 
-            // sanity checks
-            JsonElement? oldElement = null;
-            if (oldValue != null)
-            {
-                if (!oldValue.GetType().IsAssignableTo(typeof(JsonElement)))
-                    throw new ArgumentException($"Type mismatch. Must be {nameof(JsonElement)}.", nameof(entity));
+            if (oldValue == null)
+                return null;
 
-                oldElement = (JsonElement)oldValue;
-            }
+            if (!oldValue.GetType().IsAssignableTo(typeof(JsonElement)))
+                throw new ArgumentException($"Type mismatch. Must be {nameof(JsonElement)}.", nameof(entity));
 
-            return oldElement;
+            return (JsonElement)oldValue;
         }
 
         private static object GetNewValue(
